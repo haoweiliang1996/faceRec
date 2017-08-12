@@ -5,12 +5,13 @@ import mxnet as mx
 import cv2
 import numpy as np
 import logging
-from logger import logger
+from logger import logger,_init_logger
 
 stars_dataset = False  # 是否使用facescrub数据集
 if not stars_dataset:
     data_dir = '/home/haowei/face/megaface_tight/'
     # data_dir = '/Users/haowei/facerecog/face/megaface_tight'
+    data_dir = '../megaface_tight'
 else:
     data_dir = '/home/haowei/face/faceRec/facescrub_aligned_100/'
 binary_train = True  # 是否二分类
@@ -163,8 +164,6 @@ def parse_train_and_eval(len_of_test, result, test_person_id,epochs_num):
             eval_metrics.add(mx.metric.Accuracy())
         eval_metrics.add(mx.metric.Accuracy())
 
-        import logging
-        logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
         # create a trainable module on GPU 0
         lenet_model = mx.mod.Module(symbol=lenet, context=mx.gpu())
         # train with the same
@@ -192,18 +191,20 @@ def parse_train_and_eval(len_of_test, result, test_person_id,epochs_num):
         logger.info('f1 {}'.format(f1_score(y_labels, y_pred)))
         logger.info('p {}'.format(precision_score(y_labels, y_pred)))
         logger.info('recall {}'.format(recall_score(y_labels, y_pred)))
-        result[len_of_test] = [acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
-                               recall_score(y_labels, y_pred)]
+        result[test_person_id]([acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
+                               recall_score(y_labels, y_pred)])
         del lenet_model
 
     train(get_model())
 
 
 def train_all_model(epochs_num,len_of_test = 30):
+    result = {}
     for i in range(len(names)):
-        logging.info(names[i])
+        logging.info('{}:{}'.format(i,names[i]))
         parse_train_and_eval(len_of_test=len_of_test, result=result, test_person_id=i,epochs_num = epochs_num)
     pass
+    logger.info(result)
 
 
 

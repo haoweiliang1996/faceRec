@@ -1,4 +1,5 @@
 import  logging
+import logging.handlers
 
 def _init_logger(this_logger, file_path):
     this_logger.setLevel(logging.DEBUG)
@@ -13,6 +14,6 @@ def _init_logger(this_logger, file_path):
     trfh.setFormatter(fmt)
     this_logger.addHandler(sh)
     this_logger.addHandler(trfh)
-logFilename = 'log'
-logger = logging.getLogger('monitor')
+logFilename = './log'
+logger = logging.getLogger()
 _init_logger(logger, logFilename)

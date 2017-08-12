@@ -5,14 +5,15 @@ import mxnet as mx
 import os
 import cv2
 
-data_dir = '/home/haowei/face/megaface_tight'
+data_dir = '../megaface_tight'
+epochs_num = 30
 with open('./persons.txt', 'r') as f:
     names = list(map(lambda s: s.strip(), f.readlines()))
 class facemodel():
     def __init__(self):
         self.models_list = []
         for i in range(len(names)):
-            sym, arg_params, aux_params = mx.model.load_checkpoint('face_cnn_binary_{}'.format(i), 20)
+            sym, arg_params, aux_params = mx.model.load_checkpoint('face_cnn_binary_{}'.format(i), epochs_num)
             mod = mx.mod.Module(symbol=sym, context=mx.gpu(), label_names=None)
             mod.bind(for_training=False, data_shapes=[('data', (1, 1, 64, 64))],
                      label_shapes=mod._label_shapes)
