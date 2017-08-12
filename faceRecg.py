@@ -8,8 +8,8 @@ import logging
 
 stars_dataset = False  # 是否使用facescrub数据集
 if not stars_dataset:
-    # data_dir = '/home/haowei/face/megaface_tight/'
-    data_dir = '/Users/haowei/facerecog/face/megaface_tight'
+    data_dir = '/home/haowei/face/megaface_tight/'
+    # data_dir = '/Users/haowei/facerecog/face/megaface_tight'
 else:
     data_dir = '/home/haowei/face/faceRec/facescrub_aligned_100/'
 binary_train = True  # 是否二分类
@@ -92,7 +92,7 @@ def parse(len_of_test, test_person_id):
     print(sum(cropus['test_label']) / len(cropus['test_label']))
 
 
-def parse_train_and_eval(len_of_test, result, test_person_id):
+def parse_train_and_eval(len_of_test, result, test_person_id,epochs_num):
     global cropus
     parse(len_of_test=len_of_test, test_person_id=test_person_id)
     batch_size = 256
@@ -148,7 +148,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id):
         return lenet
 
     # train
-    def train(lenet, epochs_num=1):
+    def train(lenet):
         if binary_train:
             model_prefix = 'face_cnn_binary_{}'.format(test_person_id)
         else:
@@ -165,7 +165,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id):
         import logging
         logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
         # create a trainable module on GPU 0
-        lenet_model = mx.mod.Module(symbol=lenet, context=mx.cpu())
+        lenet_model = mx.mod.Module(symbol=lenet, context=mx.gpu())
         # train with the same
         lenet_model.fit(train_iter,
                         eval_data=val_iter,
@@ -198,10 +198,10 @@ def parse_train_and_eval(len_of_test, result, test_person_id):
     train(get_model())
 
 
-def train_all_model():
+def train_all_model(epochs_num,len_of_test = 30):
     for i in range(len(names)):
         logging.error(names[i])
-        parse_train_and_eval(len_of_test=30, result=result, test_person_id=i)
+        parse_train_and_eval(len_of_test=len_of_test, result=result, test_person_id=i,epochs_num = epochs_num)
     pass
 
 

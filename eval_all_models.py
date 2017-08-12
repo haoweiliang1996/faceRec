@@ -4,15 +4,15 @@ import mxnet as mx
 import os
 import cv2
 
-data_dir = '/Users/haowei/facerecog/face/megaface_tight'
+data_dir = '/home/haowei/face/megaface_tight'
 with open('./persons.txt', 'r') as f:
     names = list(map(lambda s: s.strip(), f.readlines()))
 class facemodel():
     def __init__(self):
         self.models_list = []
         for i in range(len(names)):
-            sym, arg_params, aux_params = mx.model.load_checkpoint('face_cnn_binary_{}'.format(i), 1)
-            mod = mx.mod.Module(symbol=sym, context=mx.cpu(), label_names=None)
+            sym, arg_params, aux_params = mx.model.load_checkpoint('face_cnn_binary_{}'.format(i), 20)
+            mod = mx.mod.Module(symbol=sym, context=mx.gpu(), label_names=None)
             mod.bind(for_training=False, data_shapes=[('data', (1, 1, 64, 64))],
                      label_shapes=mod._label_shapes)
             mod.set_params(arg_params, aux_params, allow_missing=True)
@@ -62,11 +62,17 @@ def eval_all_model():
             print(e)
     y_true = []
     y_pred = []
+    y_pred_with_other = []
     for id, faces in enumerate(face_eval_data):
         y_true += [id] * len(faces)
         for face in faces:
-            y_pred.append(face_model.predict(pic=face))
+            temp = face_model.predict(pic=face)
+            y_pred_with_other.append(temp)
+            if temp == -1:
+                temp = id
+            y_pred.append(temp)
     print(accuracy_score(y_true, y_pred))
+    print(accuracy_score(y_true, y_pred_with_other))
     pass
 
 eval_all_model()
