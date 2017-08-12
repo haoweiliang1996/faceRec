@@ -5,6 +5,7 @@ import mxnet as mx
 import cv2
 import numpy as np
 import logging
+from logger import logger
 
 stars_dataset = False  # 是否使用facescrub数据集
 if not stars_dataset:
@@ -43,14 +44,14 @@ def read_in():
                 p = p[np.newaxis, :]
                 files_list.append(p)
             except Exception as e:
-                print(e)
-                print(name)
+                logger.info(e)
+                logger.info(name)
         return files_list
 
     for filenames_list in cropus_filename:
         temp = parse_dir(filenames_list)
         cropus_data.append(temp)
-    logging.error("read file in")
+    logging.info("read file in")
     return cropus_data
 
 
@@ -64,7 +65,7 @@ def parse(len_of_test, test_person_id):
         if dir_name == names[test_person_id]:
             index_test = i
     n = np.array(list((map(lambda s: len(s), cropus_data))))
-    print(n[index_test])
+    logger.info(n[index_test])
 
     global cropus
     cropus = {}
@@ -85,11 +86,11 @@ def parse(len_of_test, test_person_id):
             cropus['train_data'] += d[test_idx:]
             cropus['test_data'] += d[0:test_idx]
     for i in ['train_data', 'train_label', 'test_data', 'test_label']:
-        print(len(cropus[i]))
+        logger.info(len(cropus[i]))
         cropus[i] = np.asarray(cropus[i])
-    print('train postive number:{},test postive number {}'.format(sum(cropus['train_label']),
+    logger.info('train postive number:{},test postive number {}'.format(sum(cropus['train_label']),
                                                                   sum(cropus['test_label'])))
-    print(sum(cropus['test_label']) / len(cropus['test_label']))
+    logger.info(sum(cropus['test_label']) / len(cropus['test_label']))
 
 
 def parse_train_and_eval(len_of_test, result, test_person_id,epochs_num):
@@ -104,7 +105,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id,epochs_num):
         class_num = len(cropus_data_cnn)
         if binary_train:
             class_num = 2
-        print('class_num {}'.format(class_num))
+        logger.info('class_num {}'.format(class_num))
         # first conv layer
         conv1 = mx.sym.Convolution(data=data, kernel=(5, 5), num_filter=25)
         bn1 = mx.sym.BatchNorm(data=conv1)
@@ -184,13 +185,13 @@ def parse_train_and_eval(len_of_test, result, test_person_id,epochs_num):
         y_labels = cropus['test_label']
 
         precision, recall, _ = precision_recall_curve(y_labels, y_scores)
-        # print(list(y_scores))
+        # logger.info(list(y_scores))
         acc = mx.metric.Accuracy()
         lenet_model.score(test_iter, acc)
-        print('acc {}'.format(acc))
-        print('f1 {}'.format(f1_score(y_labels, y_pred)))
-        print('p {}'.format(precision_score(y_labels, y_pred)))
-        print('recall {}'.format(recall_score(y_labels, y_pred)))
+        logger.info('acc {}'.format(acc))
+        logger.info('f1 {}'.format(f1_score(y_labels, y_pred)))
+        logger.info('p {}'.format(precision_score(y_labels, y_pred)))
+        logger.info('recall {}'.format(recall_score(y_labels, y_pred)))
         result[len_of_test] = [acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
                                recall_score(y_labels, y_pred)]
         del lenet_model
@@ -200,14 +201,9 @@ def parse_train_and_eval(len_of_test, result, test_person_id,epochs_num):
 
 def train_all_model(epochs_num,len_of_test = 30):
     for i in range(len(names)):
-        logging.error(names[i])
+        logging.info(names[i])
         parse_train_and_eval(len_of_test=len_of_test, result=result, test_person_id=i,epochs_num = epochs_num)
     pass
 
 
 
-
-result = {}
-from pprint import pprint
-
-pprint(result)

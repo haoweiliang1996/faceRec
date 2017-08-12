@@ -1,5 +1,6 @@
 import numpy as np
 from collections import namedtuple
+from logger import logger
 import mxnet as mx
 import os
 import cv2
@@ -59,7 +60,7 @@ def eval_all_model():
                 temp.append(p)
             face_eval_data.append(temp)
         except Exception as e:
-            print(e)
+            logger.error(e)
     y_true = []
     y_pred = []
     y_pred_with_other = []
@@ -71,8 +72,8 @@ def eval_all_model():
             if temp == -1:
                 temp = id
             y_pred.append(temp)
-    print(accuracy_score(y_true, y_pred))
-    print(accuracy_score(y_true, y_pred_with_other))
+    logger.info(accuracy_score(y_true, y_pred))
+    logger.info(accuracy_score(y_true, y_pred_with_other))
     pass
 
 eval_all_model()
