@@ -1,3 +1,5 @@
 from faceRecg import train_all_model
+import sys
 
-train_all_model(epochs_num = 20)
+print(sys.argv)
+train_all_model(epochs_num = int(sys.argv[1]),len_of_test = int(sys.argv[2]))
