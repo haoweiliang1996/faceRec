@@ -5,12 +5,7 @@ import mxnet as mx
 import os
 import cv2
 import sys
-
-<<<<<<< HEAD
 data_dir = '../testface'
-
-print(sys.argv)
-epochs_num = int(sys.argv[1])
 with open('./persons.txt', 'r') as f:
     names = list(map(lambda s: s.strip(), f.readlines()))
 class facemodel():

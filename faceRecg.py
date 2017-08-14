@@ -182,6 +182,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
 
         best_acc = -1
         patience = 5
+	pa_count = patience
         for epoch in range(30):
             train_iter.reset()
             eval_metrics.reset()
@@ -196,10 +197,10 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
             if best_acc < score[0][1]:
                 arg_params,aux_params = lenet_model.get_params()
                 best_acc = score[0][1]
-                patience = 5
-            else:
-                patience -= 1
-            if patience < 0:
+                pa_count = patience
+            elif best_acc > score[0][1]:
+                pa_count -= 1
+            if  pa_count< 0:
                 break
         mx.model.save_checkpoint(prefix="face-cnn-person-{}".format(test_person_id),epoch = 0,symbol=lenet,arg_params=arg_params,aux_params=aux_params)
 
@@ -234,7 +235,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
         logger.info('f1 {}'.format(f1_score(y_labels, y_pred)))
         logger.info('p {}'.format(precision_score(y_labels, y_pred)))
         logger.info('recall {}'.format(recall_score(y_labels, y_pred)))
-        result[test_person_id]([acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
+        result[test_person_id] = ([acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
                                 recall_score(y_labels, y_pred)])
         del lenet_model,best_val_model
 
