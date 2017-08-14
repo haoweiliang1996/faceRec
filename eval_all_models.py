@@ -46,7 +46,7 @@ from sklearn.metrics import accuracy_score
 
 def eval_all_model():
     face_model = facemodel()
-    len_of_train = 30
+    len_of_train = 50
     face_eval_data = []
     for name in names:
         pathname = os.path.join(data_dir, name)
@@ -63,17 +63,18 @@ def eval_all_model():
             logger.error(e)
     y_true = []
     y_pred = []
-    y_pred_with_other = []
+    y_pred_without_other = []
+    y_true_without_other = []
     for id, faces in enumerate(face_eval_data):
         y_true += [id] * len(faces)
         for face in faces:
             temp = face_model.predict(pic=face)
-            y_pred_with_other.append(temp)
-            if temp == -1:
-                temp = id
+            if temp != -1:
+                y_pred_without_other.append(temp)
+                y_true_without_other.append(id)
             y_pred.append(temp)
     logger.info(accuracy_score(y_true, y_pred))
-    logger.info(accuracy_score(y_true, y_pred_with_other))
+    logger.info(accuracy_score(y_true_without_other, y_pred_without_other))
     pass
 
 eval_all_model()

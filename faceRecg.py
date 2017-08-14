@@ -182,7 +182,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
 
         best_acc = -1
         patience = 5
-	pa_count = patience
+        pa_count = patience
         for epoch in range(30):
             train_iter.reset()
             eval_metrics.reset()
@@ -243,6 +243,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
 
 
 def train_all_model(epochs_num,len_of_test = 30):
+    print(names)
     result = {}
     for i in range(len(names)):
         logging.info('{}:{}'.format(i,names[i]))
