@@ -5,7 +5,6 @@ import os
 import cv2
 import mxnet as mx
 import numpy as np
-
 from logger import logger
 
 stars_dataset = False  # 是否使用facescrub数据集
@@ -159,14 +158,15 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
         lenet = mx.sym.SoftmaxOutput(data=fc2, name='softmax')
         return lenet
 
-    # train
     def train(lenet):
+        '''
         if binary_train:
             model_prefix = 'face_cnn_binary_{}'.format(test_person_id)
         else:
             model_prefix = 'face_cnn'
 
         checkpoint = mx.callback.do_checkpoint(model_prefix, epochs_num)
+        '''
         eval_metrics = mx.metric.CompositeEvalMetric()
         if binary_train:
             eval_metrics.add(mx.metric.F1())
@@ -176,17 +176,50 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
 
         # create a trainable module on GPU 0
         lenet_model = mx.mod.Module(symbol=lenet, context=mx.gpu())
+        lenet_model.bind(data_shapes=train_iter.provide_data,label_shapes=train_iter.provide_label)
+        lenet_model.init_params(initializer=mx.init.Uniform(scale=.1))
+        lenet_model.init_optimizer(optimizer='Adadelta')
+
+        best_acc = -1
+        patience = 5
+        for epoch in range(30):
+            train_iter.reset()
+            eval_metrics.reset()
+            for batch in train_iter:
+                lenet_model.forward(batch,is_train=True)
+                lenet_model.update_metric(eval_metrics,batch.label)
+                lenet_model.backward()
+                lenet_model.update()
+            logger.info('Epoch {},Training {}'.format(epoch,eval_metrics.get()))
+            score = lenet_model.score(val_iter,['acc','f1'])
+            print('val acc {},f1 {}'.format(score[0][1],score[1][1]))
+            if best_acc < score[0][1]:
+                arg_params,aux_params = lenet_model.get_params()
+                best_acc = score[0][1]
+                patience = 5
+            else:
+                patience -= 1
+            if patience < 0:
+                break
+        mx.model.save_checkpoint(prefix="face-cnn-person-{}".format(test_person_id),epoch = 0,symbol=lenet,arg_params=arg_params,aux_params=aux_params)
+
+
         # train with the same
+        '''
         lenet_model.fit(train_iter,
                         eval_data=val_iter,
                         optimizer='Adadelta',
                         eval_metric=eval_metrics,
                         batch_end_callback=mx.callback.Speedometer(batch_size, frequent=50),
                         num_epoch=epochs_num, epoch_end_callback=checkpoint)
+        '''
         # eval
+        best_val_model = mx.mod.Module(symbol=lenet, context=mx.gpu())
+        best_val_model.bind(for_training=False,data_shapes=train_iter.provide_data,label_shapes=train_iter.provide_label)
+        best_val_model.set_params(arg_params,aux_params)
         from sklearn.metrics import precision_recall_curve, f1_score, precision_score, recall_score
         test_iter = mx.io.NDArrayIter(cropus['test_data'], cropus['test_label'], batch_size)
-        prob = lenet_model.predict(test_iter)
+        prob = best_val_model.predict(test_iter)
         y_scores = prob.asnumpy()[:, 1]
         y_pred = []
         for i in prob:
@@ -196,22 +229,25 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
         precision, recall, _ = precision_recall_curve(y_labels, y_scores)
         # logger.info(list(y_scores))
         acc = mx.metric.Accuracy()
-        lenet_model.score(test_iter, acc)
+        best_val_model.score(test_iter, acc)
         logger.info('acc {}'.format(acc))
         logger.info('f1 {}'.format(f1_score(y_labels, y_pred)))
         logger.info('p {}'.format(precision_score(y_labels, y_pred)))
         logger.info('recall {}'.format(recall_score(y_labels, y_pred)))
-        result[test_person_id] = [acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
-                                recall_score(y_labels, y_pred)]
-        del lenet_model
+        result[test_person_id]([acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
+                                recall_score(y_labels, y_pred)])
+        del lenet_model,best_val_model
 
     train(get_model())
 
 
-def train_all_model(epochs_num, len_of_test=30):
+def train_all_model(epochs_num,len_of_test = 30):
     result = {}
     for i in range(len(names)):
-        logging.info('{}:{}'.format(i, names[i]))
-        parse_train_and_eval(len_of_test=len_of_test, result=result, test_person_id=i, epochs_num=epochs_num)
+        logging.info('{}:{}'.format(i,names[i]))
+        parse_train_and_eval(len_of_test=len_of_test, result=result, test_person_id=i,epochs_num = epochs_num)
     pass
     logger.info(result)
+
+
+
