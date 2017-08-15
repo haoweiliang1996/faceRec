@@ -16,6 +16,7 @@ binary_train = True  # 是否二分类
 
 with open('./persons.txt', 'r') as f:
     names = list(map(lambda s: s.strip(), f.readlines()))
+    print(names)
 
 '''
     read in pic
@@ -73,7 +74,7 @@ def parse(len_of_test, test_person_id):
         cropus[i] = []
 
     for i, d in enumerate(cropus_data_cnn):
-        test_idx = int(len(d) / 5 + 1)
+        test_idx = int(len(d) / 8)
         train_num = len(d) - test_idx
         '''
         if i == index_test:
@@ -90,10 +91,12 @@ def parse(len_of_test, test_person_id):
 
     temp = list(map(lambda s:os.path.join(test_data_dir,names[test_person_id],s),os.listdir(os.path.join(test_data_dir, names[test_person_id]))))
     test_cropus = parse_dir(temp)
-    cropus['train_label'] += [1]*len_of_test
-    cropus['test_label'] += [1] *(len(test_cropus) - len_of_test)
-    cropus['test_data'] += test_cropus[len_of_test:]
-    cropus['train_data'] += test_cropus[0:len_of_test]
+    # 用3个做val集
+    len_of_val = 3
+    cropus['test_label'] += [1] *(len_of_val)
+    cropus['test_data'] += test_cropus[:len_of_val]
+    cropus['train_label'] += [1]*(len_of_test-len_of_val)
+    cropus['train_data'] += test_cropus[len_of_val:len_of_test]
 
     for i in ['train_data', 'train_label', 'test_data', 'test_label']:
         logger.info(len(cropus[i]))
@@ -106,7 +109,7 @@ def parse(len_of_test, test_person_id):
 def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
     global cropus
     parse(len_of_test=len_of_test, test_person_id=test_person_id)
-    batch_size = 256
+    batch_size = 64
     train_iter = mx.io.NDArrayIter(cropus['train_data'], cropus['train_label'], batch_size, shuffle=True)
     val_iter = mx.io.NDArrayIter(cropus['test_data'], cropus['test_label'], batch_size)
 
@@ -168,11 +171,8 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
         checkpoint = mx.callback.do_checkpoint(model_prefix, epochs_num)
         '''
         eval_metrics = mx.metric.CompositeEvalMetric()
-        if binary_train:
-            eval_metrics.add(mx.metric.F1())
-        else:
-            eval_metrics.add(mx.metric.Accuracy())
         eval_metrics.add(mx.metric.Accuracy())
+        eval_metrics.add(mx.metric.F1())
 
         # create a trainable module on GPU 0
         lenet_model = mx.mod.Module(symbol=lenet, context=mx.gpu())
@@ -183,7 +183,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
         best_acc = -1
         patience = 5
         pa_count = patience
-        for epoch in range(30):
+        for epoch in range(50):
             train_iter.reset()
             eval_metrics.reset()
             for batch in train_iter:
@@ -193,11 +193,17 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
                 lenet_model.update()
             logger.info('Epoch {},Training {}'.format(epoch,eval_metrics.get()))
             score = lenet_model.score(val_iter,['acc','f1'])
-            print('val acc {},f1 {}'.format(score[0][1],score[1][1]))
+            #score = eval_metrics.get()
+            # print(score)
+
+            logger.info('val acc {},f1 {}'.format(score[0][1],score[1][1]))
             if best_acc < score[0][1]:
                 arg_params,aux_params = lenet_model.get_params()
                 best_acc = score[0][1]
                 pa_count = patience
+                logger.info('best val acc get {}'.format(best_acc))
+            elif best_acc == score[0][1]:
+                arg_params,aux_params = lenet_model.get_params()
             elif best_acc > score[0][1]:
                 pa_count -= 1
             if  pa_count< 0:

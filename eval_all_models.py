@@ -8,6 +8,7 @@ import sys
 data_dir = '../testface'
 with open('./persons.txt', 'r') as f:
     names = list(map(lambda s: s.strip(), f.readlines()))
+    print(names)
 class facemodel():
     def __init__(self):
         self.models_list = []
@@ -46,7 +47,7 @@ from sklearn.metrics import accuracy_score
 
 def eval_all_model():
     face_model = facemodel()
-    len_of_train = 50
+    len_of_train = 15
     face_eval_data = []
     for name in names:
         pathname = os.path.join(data_dir, name)
