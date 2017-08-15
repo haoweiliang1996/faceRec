@@ -31,14 +31,14 @@ def parse_dir(filenames_list):
     files_list = []
     for name in filenames_list:
         try:
-            p = cv2.imread(name, cv2.IMREAD_GRAYSCALE)
-            p = cv2.resize(p, (64, 64))
+            p = cv2.imread(name)
+            p = cv2.resize(p, (144, 144))
             '''
             cv2.imshow('p',p)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
             '''
-            p = p[np.newaxis, :]
+            p = np.stack([p[:,:,i] for i in range(3)],axis=0)
             files_list.append(p)
         except Exception as e:
             logger.info(e)
