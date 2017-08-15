@@ -170,6 +170,8 @@ def fit(symbol, arg_params, aux_params, train, val, batch_size, num_gpus):
 num_classes = 2
 batch_per_gpu = 16
 num_gpus = 1
+sym, arg_params, aux_params = mx.model.load_checkpoint('resnet-50', 0)
+(new_sym, new_args) = get_fine_tune_model(sym, arg_params, num_classes)
 
 def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
     global cropus
@@ -177,8 +179,6 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
     batch_size = 64
     train_iter = mx.io.NDArrayIter(cropus['train_data'], cropus['train_label'], batch_size, shuffle=True)
     val_iter = mx.io.NDArrayIter(cropus['test_data'], cropus['test_label'], batch_size)
-    sym, arg_params, aux_params = mx.model.load_checkpoint('resnet-50', 0)
-    (new_sym, new_args) = get_fine_tune_model(sym, arg_params, num_classes)
     batch_size = batch_per_gpu * num_gpus
     fit(new_sym, new_args, aux_params, train_iter, val_iter, batch_size, num_gpus)
 
