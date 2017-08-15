@@ -8,8 +8,6 @@ import numpy as np
 from logger import logger
 
 stars_dataset = False  # 是否使用facescrub数据集
-data_dir = '/home/haowei/face/megaface_tight/'
-# data_dir = '/Users/haowei/facerecog/face/megaface_tight'
 data_dir = '../megaface_tight'
 test_data_dir = '../testface'
 binary_train = True  # 是否二分类
@@ -224,7 +222,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
     train_iter = mx.io.NDArrayIter(cropus['train_data'], cropus['train_label'], batch_size, shuffle=True)
     val_iter = mx.io.NDArrayIter(cropus['test_data'], cropus['test_label'], batch_size)
     batch_size = batch_per_gpu * num_gpus
-    fit(new_sym, new_args, aux_params, train_iter, val_iter, batch_size, num_gpus,result=result,test_person_id=test_person_id)
+    fit(new_sym, new_args, aux_params, train_iter, val_iter, num_gpus,result=result,test_person_id=test_person_id)
 
 def train_all_model(epochs_num,len_of_test = 30):
     print(names)
