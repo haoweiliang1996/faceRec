@@ -26,7 +26,7 @@ def parse_dir(filenames_list):
     for name in filenames_list:
         try:
             p = cv2.imread(name)
-            p = cv2.resize(p, (64, 64))
+            p = cv2.resize(p, (144, 144))
             '''
             cv2.imshow('p',p)
             cv2.waitKey(0)
@@ -156,7 +156,7 @@ def fit(symbol, arg_params, aux_params, train, val, num_gpus,result,test_person_
     best_acc = -1
     patience = 3
     pa_count = patience
-    for epoch in range(10):
+    for epoch in range(7):
         train.reset()
         eval_metrics.reset()
         for batch in train:
