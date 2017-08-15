@@ -1,0 +1,22 @@
+[faceRecg.py:54 -    read_in() ] [2017-08-12 14:39:27] [INFO] read file in
+[faceRecg.py:203 - train_all_model() ] [2017-08-12 14:39:27] [INFO] lhw
+[faceRecg.py:68 -      parse() ] [2017-08-12 14:39:27] [INFO] 251
+[faceRecg.py:89 -      parse() ] [2017-08-12 14:39:27] [INFO] 15273
+[faceRecg.py:89 -      parse() ] [2017-08-12 14:39:27] [INFO] 15273
+[faceRecg.py:89 -      parse() ] [2017-08-12 14:39:27] [INFO] 5298
+[faceRecg.py:89 -      parse() ] [2017-08-12 14:39:27] [INFO] 5298
+[faceRecg.py:92 -      parse() ] [2017-08-12 14:39:27] [INFO] train postive number:30,test postive number 221
+[faceRecg.py:93 -      parse() ] [2017-08-12 14:39:27] [INFO] 0.0417138542846
+[faceRecg.py:108 -  get_model() ] [2017-08-12 14:39:28] [INFO] class_num 2
+[callback.py:149 -   __call__() ] [2017-08-12 14:39:44] [INFO] Epoch[0] Batch [50]	Speed: 1007.98 samples/sec	f1=0.000000	accuracy=0.996400
+[base_module.py:510 -        fit() ] [2017-08-12 14:39:46] [INFO] Epoch[0] Train-f1=0.000000
+[base_module.py:510 -        fit() ] [2017-08-12 14:39:46] [INFO] Epoch[0] Train-accuracy=0.998698
+[base_module.py:512 -        fit() ] [2017-08-12 14:39:46] [INFO] Epoch[0] Time cost=15.101
+[base_module.py:530 -        fit() ] [2017-08-12 14:39:48] [INFO] Epoch[0] Validation-f1=0.000000
+[base_module.py:530 -        fit() ] [2017-08-12 14:39:48] [INFO] Epoch[0] Validation-accuracy=0.958891
+[callback.py:149 -   __call__() ] [2017-08-12 14:40:01] [INFO] Epoch[1] Batch [50]	Speed: 990.87 samples/sec	f1=0.000000	accuracy=0.997932
+[base_module.py:510 -        fit() ] [2017-08-12 14:40:03] [INFO] Epoch[1] Train-f1=0.000000
+[base_module.py:510 -        fit() ] [2017-08-12 14:40:03] [INFO] Epoch[1] Train-accuracy=0.998698
+[base_module.py:512 -        fit() ] [2017-08-12 14:40:03] [INFO] Epoch[1] Time cost=15.355
+[base_module.py:530 -        fit() ] [2017-08-12 14:40:05] [INFO] Epoch[1] Validation-f1=0.000000
+[base_module.py:530 -        fit() ] [2017-08-12 14:40:05] [INFO] Epoch[1] Validation-accuracy=0.958891
