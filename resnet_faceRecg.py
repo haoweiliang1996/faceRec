@@ -149,7 +149,7 @@ def fit(symbol, arg_params, aux_params, train, val, num_gpus,result,test_person_
     eval_metrics.add(mx.metric.F1())
 
     # create a trainable module on GPU 0
-    mod.bind(data_shapes=train.provide_data,rabel_shapes=train.provide_label)
+    mod.bind(data_shapes=train.provide_data,label_shapes=train.provide_label)
     mod.init_params(initializer=mx.init.Uniform(scale=.1))
     mod.init_optimizer(optimizer='Adadelta')
 
