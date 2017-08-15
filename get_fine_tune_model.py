@@ -8,4 +8,4 @@ def get_model(prefix, epoch):
     download(prefix+'-symbol.json')
     download(prefix+'-%04d.params' % (epoch,))
 
-get_model('http://data.mxnet.io/models/imagenet/resnet/50-layers/resnet-50', 0)
+get_model('http://data.mxnet.io/models/imagenet-11k/resnet-152/resnet-152', 0)

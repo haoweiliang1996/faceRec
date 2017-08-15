@@ -150,13 +150,13 @@ def fit(symbol, arg_params_pre, aux_params_pre, train, val, num_gpus,result,test
 
     # create a trainable module on GPU 0
     mod.bind(data_shapes=train.provide_data,label_shapes=train.provide_label)
-    mod.init_params(initializer=mx.init.Uniform(scale=.1),aux_params=aux_params_pre,arg_params=arg_params_pre)
+    mod.init_params(initializer=mx.init.Uniform(scale=.1),aux_params=aux_params_pre,arg_params=arg_params_pre,allow_missing=True)
     mod.init_optimizer(optimizer='Adadelta')
 
     best_acc = -1
     patience = 3
     pa_count = patience
-    for epoch in range(7):
+    for epoch in range(10):
         train.reset()
         eval_metrics.reset()
         for batch in train:
@@ -212,7 +212,7 @@ def fit(symbol, arg_params_pre, aux_params_pre, train, val, num_gpus,result,test
 num_classes = 2
 batch_per_gpu = 16
 num_gpus = 1
-sym, arg_params, aux_params = mx.model.load_checkpoint('resnet-50', 0)
+sym, arg_params, aux_params = mx.model.load_checkpoint('resnet-152', 0)
 (new_sym, new_args) = get_fine_tune_model(sym, arg_params, num_classes)
 
 def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
