@@ -26,7 +26,7 @@ def parse_dir(filenames_list):
     for name in filenames_list:
         try:
             p = cv2.imread(name)
-            p = cv2.resize(p, (144, 144))
+            p = cv2.resize(p, (64, 64))
             '''
             cv2.imshow('p',p)
             cv2.waitKey(0)
@@ -141,7 +141,7 @@ def get_fine_tune_model(symbol, arg_params, num_classes, layer_name='flatten0'):
 
 
 
-def fit(symbol, arg_params, aux_params, train, val, num_gpus,result,test_person_id):
+def fit(symbol, arg_params_pre, aux_params_pre, train, val, num_gpus,result,test_person_id):
     devs = [mx.gpu(i) for i in range(num_gpus)]
     mod = mx.mod.Module(symbol=symbol, context=devs)
     eval_metrics = mx.metric.CompositeEvalMetric()
@@ -150,7 +150,7 @@ def fit(symbol, arg_params, aux_params, train, val, num_gpus,result,test_person_
 
     # create a trainable module on GPU 0
     mod.bind(data_shapes=train.provide_data,label_shapes=train.provide_label)
-    mod.init_params(initializer=mx.init.Uniform(scale=.1))
+    mod.init_params(initializer=mx.init.Uniform(scale=.1),aux_params=aux_params_pre,arg_params=arg_params_pre)
     mod.init_optimizer(optimizer='Adadelta')
 
     best_acc = -1
