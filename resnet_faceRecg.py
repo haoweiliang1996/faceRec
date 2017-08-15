@@ -1,7 +1,3 @@
-import logging
-
-import mxnet as mx
-
 # 读取图片,读取数据之前先在开始处设定data_dir
 import logging
 import os
@@ -145,26 +141,74 @@ def get_fine_tune_model(symbol, arg_params, num_classes, layer_name='flatten0'):
     return (net, new_args)
 
 
-head = '%(asctime)-15s %(message)s'
-logging.basicConfig(level=logging.DEBUG, format=head)
 
 
-def fit(symbol, arg_params, aux_params, train, val, batch_size, num_gpus):
+def fit(symbol, arg_params, aux_params, train, val, num_gpus,result,test_person_id):
     devs = [mx.gpu(i) for i in range(num_gpus)]
     mod = mx.mod.Module(symbol=symbol, context=devs)
-    mod.fit(train, val,
-            num_epoch=8,
-            arg_params=arg_params,
-            aux_params=aux_params,
-            allow_missing=True,
-            batch_end_callback=mx.callback.Speedometer(batch_size, 10),
-            kvstore='device',
-            optimizer='sgd',
-            optimizer_params={'learning_rate': 0.01},
-            initializer=mx.init.Xavier(rnd_type='gaussian', factor_type="in", magnitude=2),
-            eval_metric='acc')
-    metric = mx.metric.Accuracy()
-    return mod.score(val, metric)
+    eval_metrics = mx.metric.CompositeEvalMetric()
+    eval_metrics.add(mx.metric.Accuracy())
+    eval_metrics.add(mx.metric.F1())
+
+    # create a trainable module on GPU 0
+    mod.bind(data_shapes=train.provide_data,rabel_shapes=train.provide_label)
+    mod.init_params(initializer=mx.init.Uniform(scale=.1))
+    mod.init_optimizer(optimizer='Adadelta')
+
+    best_acc = -1
+    patience = 3
+    pa_count = patience
+    for epoch in range(10):
+        train.reset()
+        eval_metrics.reset()
+        for batch in train:
+            mod.forward(batch,is_train=True)
+            mod.update_metric(eval_metrics,batch.label)
+            mod.backward()
+            mod.update()
+        logger.info('Epoch {},Training {}'.format(epoch,eval_metrics.get()))
+        score = mod.score(val,['acc','f1'])
+        #score = eval_metrics.get()
+        # print(score)
+
+        logger.info('val acc {},f1 {}'.format(score[0][1],score[1][1]))
+        if best_acc < score[0][1]:
+            arg_params,aux_params = mod.get_params()
+            best_acc = score[0][1]
+            pa_count = patience
+            logger.info('best val acc get {}'.format(best_acc))
+        elif best_acc == score[0][1]:
+            arg_params,aux_params = mod.get_params()
+        elif best_acc > score[0][1]:
+            pa_count -= 1
+        if  pa_count< 0:
+            break
+    mx.model.save_checkpoint(prefix="face-cnn-person-{}".format(test_person_id),epoch = 0,symbol=symbol,arg_params=arg_params,aux_params=aux_params)
+
+
+    # eval
+    best_val_model = mx.mod.Module(symbol=symbol, context=mx.gpu())
+    best_val_model.bind(for_training=False,data_shapes=train.provide_data,label_shapes=train.provide_label)
+    best_val_model.set_params(arg_params,aux_params)
+    from sklearn.metrics import precision_recall_curve, f1_score, precision_score, recall_score
+    prob = best_val_model.predict(val)
+    y_scores = prob.asnumpy()[:, 1]
+    y_pred = []
+    for i in prob:
+        y_pred.append(i.asnumpy().argmax())
+    y_labels = cropus['test_label']
+
+    precision, recall, _ = precision_recall_curve(y_labels, y_scores)
+    # logger.info(list(y_scores))
+    acc = mx.metric.Accuracy()
+    best_val_model.score(val, acc)
+    logger.info('acc {}'.format(acc))
+    logger.info('f1 {}'.format(f1_score(y_labels, y_pred)))
+    logger.info('p {}'.format(precision_score(y_labels, y_pred)))
+    logger.info('recall {}'.format(recall_score(y_labels, y_pred)))
+    result[test_person_id] = ([acc, f1_score(y_labels, y_pred), precision_score(y_labels, y_pred),
+                               recall_score(y_labels, y_pred)])
+    del mod,best_val_model
 
 
 num_classes = 2
@@ -180,7 +224,7 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
     train_iter = mx.io.NDArrayIter(cropus['train_data'], cropus['train_label'], batch_size, shuffle=True)
     val_iter = mx.io.NDArrayIter(cropus['test_data'], cropus['test_label'], batch_size)
     batch_size = batch_per_gpu * num_gpus
-    fit(new_sym, new_args, aux_params, train_iter, val_iter, batch_size, num_gpus)
+    fit(new_sym, new_args, aux_params, train_iter, val_iter, batch_size, num_gpus,result=result,test_person_id=test_person_id)
 
 def train_all_model(epochs_num,len_of_test = 30):
     print(names)
