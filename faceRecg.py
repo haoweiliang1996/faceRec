@@ -6,6 +6,7 @@ import cv2
 import mxnet as mx
 import numpy as np
 from logger import logger
+from logistic_regression import get_model
 
 stars_dataset = False  # 是否使用facescrub数据集
 data_dir = '/home/haowei/face/megaface_tight/'
@@ -255,6 +256,5 @@ def train_all_model(epochs_num,len_of_test = 30):
         parse_train_and_eval(len_of_test=len_of_test, result=result, test_person_id=i,epochs_num = epochs_num)
     pass
     logger.info(result)
-
 
 

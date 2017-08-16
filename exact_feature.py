@@ -1,5 +1,6 @@
 # 读取图片,读取数据之前先在开始处设定data_dir
 import logging
+from logistic_regression import get_model
 import os
 
 import cv2
@@ -119,6 +120,32 @@ def get_feature(img):
     print(features)
     return features
 
+if __name__ == '__main__':
+    train_crpous = cropus_data[0:300]
+    def fill(crpous):
+        datas = []
+        labels = []
+        for object in crpous:
+            object_temp = object[:3]
+            for id1,pic1 in enumerate(object_temp):
+                for id2,pic2 in enumerate(object_temp):
+                    datas.append(np.hstack((get_feature(pic1),get_feature(pic2))))
+                    labels.append(int(id1==id2))
+        return datas,labels
+    train_datas,train_labels = fill(train_crpous)
+    val_cropus= cropus_data[300:500]
+    val_datas,val_labels = fill(val_cropus)
+    logger.info("train len {},val len {}".format(len(train_labels),len(val_datas)))
+
+    model = get_model()
+    batch_size = 256
+    train_iter = mx.io.NDArrayIter(train_datas,train_labels,batch_size,shuffle=True)
+    val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
+    mod = mx.mod.Module(symbol=model,context=mx.gpu())
+    mod.fit(train_iter,val_iter,optimizer="Adadelta",eval_metric='acc'
+            ,batch_end_callback=mx.callback.Speedometer(batch_size,100),num_epoch=10)
+
+'''
 from sklearn.metrics.pairwise import cosine_similarity
 a = get_feature(cropus_data[0][0])
 b = get_feature(cropus_data[0][1])
@@ -128,4 +155,4 @@ print(cosine_similarity(a,b))
 print(cosine_similarity(c,b))
 print(cosine_similarity(a,c))
 print(cosine_similarity(a,d))
-
+'''
