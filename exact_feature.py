@@ -21,7 +21,7 @@ with open('./persons.txt', 'r') as f:
     read in pic
 '''
 
-
+mean_image = mx.nd.load('mean.ndarray')['mean_image']
 def parse_dir(filenames_list):
     files_list = []
     for name in filenames_list:
@@ -33,9 +33,10 @@ def parse_dir(filenames_list):
             cv2.waitKey(0)
             cv2.destroyAllWindows()
             '''
-            # p = np.stack([p[:,:,i] for i in range(3)],axis=0)
-            p = p[np.newaxis,:]
-            files_list.append(p)
+            p = np.stack([p[:,:,i] for i in range(3)],axis=0)
+            pic = p - mean_image.asnumpy()
+            pic = pic[np.newaxis,:]
+            files_list.append(pic)
         except Exception as e:
             logger.info(e)
             logger.info(name)
@@ -105,17 +106,26 @@ def parse(len_of_test, test_person_id):
 
 
 
+sym, arg_params, aux_params = mx.model.load_checkpoint('resnet-101', 0)
+all_layers = sym.get_internals()
+fe_sym = all_layers['flatten_0_output']
+fe_mod = mx.mod.Module(symbol=fe_sym, context=mx.gpu(), label_names=None)
+fe_mod.bind(for_training=False, data_shapes=[('data', (1,3,224,224))])
+fe_mod.set_params(arg_params, aux_params)
+Batch = namedtuple('Batch', ['data'])
 def get_feature(img):
-    sym, arg_params, aux_params = mx.model.load_checkpoint('resnet-101', 0)
-    all_layers = sym.get_internals()
-    fe_sym = all_layers['flatten_0_output']
-    fe_mod = mx.mod.Module(symbol=fe_sym, context=mx.gpu(), label_names=None)
-    fe_mod.bind(for_training=False, data_shapes=[('data', (1,1,224,224))])
-    fe_mod.set_params(arg_params, aux_params)
-    Batch = namedtuple('Batch', ['data'])
     fe_mod.forward(Batch([mx.nd.array(img)]))
     features = fe_mod.get_outputs()[0].asnumpy()
     print(features)
-    print(features.shape)
+    return features
 
-get_feature(cropus_data[0][0])
+from sklearn.metrics.pairwise import cosine_similarity
+a = get_feature(cropus_data[0][0])
+b = get_feature(cropus_data[0][1])
+c = get_feature(cropus_data[0][2])
+d = get_feature(cropus_data[1][0])
+print(cosine_similarity(a,b))
+print(cosine_similarity(c,b))
+print(cosine_similarity(a,c))
+print(cosine_similarity(a,d))
+
