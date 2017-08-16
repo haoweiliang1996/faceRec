@@ -114,26 +114,29 @@ fe_mod = mx.mod.Module(symbol=fe_sym, context=mx.gpu(), label_names=None)
 fe_mod.bind(for_training=False, data_shapes=[('data', (1,3,224,224))])
 fe_mod.set_params(arg_params, aux_params)
 Batch = namedtuple('Batch', ['data'])
+
 def get_feature(img):
     fe_mod.forward(Batch([mx.nd.array(img)]))
     features = fe_mod.get_outputs()[0].asnumpy()
-    print(features)
     return features
 
 if __name__ == '__main__':
-    train_crpous = cropus_data[0:300]
+    train_crpous = cropus_data[0:50]
     def fill(crpous):
         datas = []
         labels = []
-        for object in crpous:
-            object_temp = object[:3]
-            for id1,pic1 in enumerate(object_temp):
-                for id2,pic2 in enumerate(object_temp):
-                    datas.append(np.hstack((get_feature(pic1),get_feature(pic2))))
-                    labels.append(int(id1==id2))
-        return datas,labels
+        for id1,object1 in enumerate(cropus):
+            object1 = object1[:5]
+            for id2,object2 in enumerate(cropus):
+                object2 = object2[:5]
+                for pic1 in object1:
+                    fe1 = get_feature(pic1)
+                    for pic2 in object2:
+                        datas.append(np.hstack((fe1,get_feature(pic2))))
+                        labels.append(int(id1==id2))
+        return mx.nd.array(datas),mx.nd.array(labels)
     train_datas,train_labels = fill(train_crpous)
-    val_cropus= cropus_data[300:500]
+    val_cropus= cropus_data[50:75]
     val_datas,val_labels = fill(val_cropus)
     logger.info("train len {},val len {}".format(len(train_labels),len(val_datas)))
 
