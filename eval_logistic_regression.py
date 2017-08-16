@@ -32,6 +32,7 @@ class facemodel():
                     p = cv2.imread(pic_name)
                     p = cv2.resize(p, (224,224))
                     p = np.stack([p[:,:,i] for i in range(3)],axis=0)
+
                     temp.append(p)
                 self.face_eval_data.append(temp)
             except Exception as e:

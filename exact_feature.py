@@ -121,7 +121,7 @@ def get_feature(img):
     return features
 from sklearn.metrics.pairwise import cosine_similarity
 if __name__ == '__main__':
-    train_crpous = cropus_data[0:30]
+    train_crpous = cropus_data[0:20]
     def fill(cropus):
         datas = []
         labels = []
@@ -148,10 +148,10 @@ if __name__ == '__main__':
     model = get_model()
     batch_size = 16
     train_iter = mx.io.NDArrayIter(train_datas,train_labels,batch_size,shuffle=True)
-    val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
+    # val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
     mod = mx.mod.Module(symbol=model,context=mx.gpu())
     mod.fit(train_iter,None,optimizer="adam",eval_metric='acc'
-            ,batch_end_callback=[mx.callback.Speedometer(batch_size,100),mx.callback.do_checkpoint('regression',2050)],num_epoch=2050)
+            ,batch_end_callback=mx.callback.Speedometer(batch_size,100),epoch_end_callback=mx.callback.do_checkpoint('regression',2050),num_epoch=2050)
 
 '''
 a = get_feature(cropus_data[0][0])
