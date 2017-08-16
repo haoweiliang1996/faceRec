@@ -119,10 +119,9 @@ def get_feature(img):
     fe_mod.forward(Batch([mx.nd.array(img)]))
     features = fe_mod.get_outputs()[0].asnumpy()
     return features
-
 from sklearn.metrics.pairwise import cosine_similarity
 if __name__ == '__main__':
-    train_crpous = cropus_data[0:12]
+    train_crpous = cropus_data[0:30]
     def fill(cropus):
         datas = []
         labels = []
@@ -142,7 +141,7 @@ if __name__ == '__main__':
                         labels.append(int(id1==id2))
         return mx.nd.array(datas),mx.nd.array(labels)
     train_datas,train_labels = fill(train_crpous)
-    val_cropus= cropus_data[12:30]
+    val_cropus= cropus_data[12:12]
     val_datas,val_labels = fill(val_cropus)
     logger.info("train len {},val len {}".format(len(train_labels.asnumpy()),len(val_datas.asnumpy())))
 
@@ -151,8 +150,8 @@ if __name__ == '__main__':
     train_iter = mx.io.NDArrayIter(train_datas,train_labels,batch_size,shuffle=True)
     val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
     mod = mx.mod.Module(symbol=model,context=mx.gpu())
-    mod.fit(train_iter,val_iter,optimizer="adam",eval_metric='acc'
-            ,batch_end_callback=mx.callback.Speedometer(batch_size,100),num_epoch=2056)
+    mod.fit(train_iter,None,optimizer="adam",eval_metric='acc'
+            ,batch_end_callback=[mx.callback.Speedometer(batch_size,100),mx.callback.do_checkpoint('regression',2050)],num_epoch=2050)
 
 '''
 a = get_feature(cropus_data[0][0])
