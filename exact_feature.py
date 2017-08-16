@@ -120,36 +120,41 @@ def get_feature(img):
     features = fe_mod.get_outputs()[0].asnumpy()
     return features
 
+from sklearn.metrics.pairwise import cosine_similarity
 if __name__ == '__main__':
-    train_crpous = cropus_data[0:50]
-    def fill(crpous):
+    train_crpous = cropus_data[0:12]
+    def fill(cropus):
         datas = []
         labels = []
         for id1,object1 in enumerate(cropus):
-            object1 = object1[:5]
+            object1 = object1[:3]
             for id2,object2 in enumerate(cropus):
-                object2 = object2[:5]
+                object2 = object2[:3]
                 for pic1 in object1:
                     fe1 = get_feature(pic1)
                     for pic2 in object2:
-                        datas.append(np.hstack((fe1,get_feature(pic2))))
+                        fe2 = get_feature(pic2)
+                        temp = np.hstack((fe1,fe2))
+                        #print(temp[0].shape)
+                        #print(np.array(cosine_similarity(fe1,fe2)[0]))
+                        # datas.append(np.hstack((temp[0],np.array(cosine_similarity(fe1,fe2)[0]))[0]))
+                        datas.append(np.array(cosine_similarity(fe1,fe2)[0]))
                         labels.append(int(id1==id2))
         return mx.nd.array(datas),mx.nd.array(labels)
     train_datas,train_labels = fill(train_crpous)
-    val_cropus= cropus_data[50:75]
+    val_cropus= cropus_data[12:30]
     val_datas,val_labels = fill(val_cropus)
-    logger.info("train len {},val len {}".format(len(train_labels),len(val_datas)))
+    logger.info("train len {},val len {}".format(len(train_labels.asnumpy()),len(val_datas.asnumpy())))
 
     model = get_model()
-    batch_size = 256
+    batch_size = 16
     train_iter = mx.io.NDArrayIter(train_datas,train_labels,batch_size,shuffle=True)
     val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
     mod = mx.mod.Module(symbol=model,context=mx.gpu())
-    mod.fit(train_iter,val_iter,optimizer="Adadelta",eval_metric='acc'
-            ,batch_end_callback=mx.callback.Speedometer(batch_size,100),num_epoch=10)
+    mod.fit(train_iter,val_iter,optimizer="adam",eval_metric='acc'
+            ,batch_end_callback=mx.callback.Speedometer(batch_size,100),num_epoch=2056)
 
 '''
-from sklearn.metrics.pairwise import cosine_similarity
 a = get_feature(cropus_data[0][0])
 b = get_feature(cropus_data[0][1])
 c = get_feature(cropus_data[0][2])
