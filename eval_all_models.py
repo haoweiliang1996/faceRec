@@ -13,12 +13,15 @@ class facemodel():
     def __init__(self):
         self.models_list = []
         for i in range(len(names)):
+            if names[i] == 'other':
+                continue
             sym, arg_params, aux_params = mx.model.load_checkpoint('face-cnn-person-{}'.format(i), 0)
             mod = mx.mod.Module(symbol=sym, context=mx.gpu(), label_names=None)
             mod.bind(for_training=False, data_shapes=[('data', (1, 1, 64, 64))],
                      label_shapes=mod._label_shapes)
             mod.set_params(arg_params, aux_params, allow_missing=True)
             self.models_list.append(mod)
+        print('len of model {}'.format(len(self.models_list)))
 
     def predict(self, pic):
         pic = pic[np.newaxis, :]
@@ -40,9 +43,6 @@ class facemodel():
 
 from sklearn.metrics import accuracy_score
 
-'''
-    使用测试的数据集predict
-'''
 
 
 def eval_all_model():
@@ -67,7 +67,10 @@ def eval_all_model():
     y_pred_without_other = []
     y_true_without_other = []
     for id, faces in enumerate(face_eval_data):
-        y_true += [id] * len(faces)
+        if id == len(names)-1:
+            y_true += [id] * len(faces)
+        else:
+            y_true += [id] * len(faces)
         for face in faces:
             temp = face_model.predict(pic=face)
             if temp != -1:

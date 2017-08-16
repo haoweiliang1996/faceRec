@@ -27,7 +27,7 @@ def parse_dir(filenames_list):
     files_list = []
     for name in filenames_list:
         try:
-            p = cv2.imread(name)
+            p = cv2.imread(name,0)
             p = cv2.resize(p, (64, 64))
             '''
             cv2.imshow('p',p)
