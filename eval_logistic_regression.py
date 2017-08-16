@@ -23,6 +23,7 @@ class facemodel():
             if names[i] == 'other':
                 continue
         self.face_eval_data = []
+        mean_image = mx.nd.load('mean.ndarray')['mean_image']
         for name in names:
             pathname = os.path.join(data_dir, name)
             temp = []
@@ -32,15 +33,15 @@ class facemodel():
                     p = cv2.imread(pic_name)
                     p = cv2.resize(p, (224,224))
                     p = np.stack([p[:,:,i] for i in range(3)],axis=0)
-
-                    temp.append(p)
+                    pic = p -mean_image.asnumpy()
+                    pic = pic[np.newaxis, :]
+                    temp.append(pic)
                 self.face_eval_data.append(temp)
             except Exception as e:
                 logger.error(e)
         self.models_list = [get_feature(i[0]) for i in self.face_eval_data]
 
     def predict(self, pic):
-        pic = pic[np.newaxis, :]
         Batch = namedtuple('Batch', ['data'])
         probs = None
         for fe1 in self.models_list:
