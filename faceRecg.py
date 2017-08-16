@@ -187,7 +187,6 @@ def parse_train_and_eval(len_of_test, result, test_person_id, epochs_num):
             train_iter.reset()
             eval_metrics.reset()
             for batch in train_iter:
-                lenet_model.forward(batch,is_train=True)
                 lenet_model.update_metric(eval_metrics,batch.label)
                 lenet_model.backward()
                 lenet_model.update()
