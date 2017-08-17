@@ -1,4 +1,4 @@
-from resnet_faceRecg import train_all_model
+from faceRecg import train_all_model
 import sys
 
 print(sys.argv)
