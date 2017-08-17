@@ -25,6 +25,7 @@ class facemodel():
         self.face_eval_data = []
         mean_image = mx.nd.load('mean.ndarray')['mean_image']
         if not os.path.exists("face_feature_test.npy"):
+            logger.info('create test feature file')
             for name in names:
                 pathname = os.path.join(data_dir, name)
                 temp = []
@@ -42,6 +43,7 @@ class facemodel():
                     logger.error(e)
             np.save("face_feature_test",self.face_eval_data)
         else:
+            logger.info('load test feature file')
             self.face_eval_data = np.load("face_feature_test.npy")
         self.models_list = [i[:10] for i in self.face_eval_data]
 
@@ -85,6 +87,7 @@ def eval_all_model():
     y_pred_without_other = []
     y_true_without_other = []
     for id, faces in enumerate(face_model.face_eval_data):
+        logger.info('eval {} begin'.format(id))
         y_true += [id] * (len(faces) -10)
         for face in faces[10:]:
             temp = face_model.predict(pic=face)
@@ -92,6 +95,7 @@ def eval_all_model():
                 y_pred_without_other.append(temp)
                 y_true_without_other.append(id)
             y_pred.append(temp)
+        logger.info('eval {} end'.format(id))
     logger.info(accuracy_score(y_true, y_pred))
     logger.info(accuracy_score(y_true_without_other, y_pred_without_other))
     pass
