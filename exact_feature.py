@@ -10,8 +10,6 @@ from logger import logger
 from collections import namedtuple
 
 stars_dataset = False  # 是否使用facescrub数据集
-data_dir = '../megaface_tight'
-test_data_dir = '../testface'
 binary_train = True  # 是否二分类
 
 with open('./persons.txt', 'r') as f:
@@ -57,7 +55,7 @@ def parse_dir(filenames_list):
     return files_list
 
 
-def read_in():
+def read_in(data_dir):
     cropus_filename = []
     for i, p in enumerate(os.listdir(data_dir)):
         p = os.path.join(data_dir, p)
@@ -71,9 +69,9 @@ def read_in():
     return cropus_data
 
 
-def dump_features():
-    cropus_data = read_in()
-    np.save("face_feature",cropus_data)
+def dump_features(data_dir,feature_name):
+    cropus_data = read_in(data_dir)
+    np.save(feature_name,cropus_data)
 
 
 '''
@@ -81,7 +79,6 @@ def dump_features():
 '''
 from sklearn.metrics.pairwise import cosine_similarity
 if __name__ == '__main__':
-    dump_features()
     cropus_data = np.load("face_feature.npy")
     train_crpous = cropus_data[0:6]
     def fill(cropus):

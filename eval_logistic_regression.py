@@ -24,21 +24,25 @@ class facemodel():
                 continue
         self.face_eval_data = []
         mean_image = mx.nd.load('mean.ndarray')['mean_image']
-        for name in names:
-            pathname = os.path.join(data_dir, name)
-            temp = []
-            try:
-                for pic_name in os.listdir(pathname):
-                    pic_name = os.path.join(pathname,pic_name)
-                    p = cv2.imread(pic_name)
-                    p = cv2.resize(p, (224,224))
-                    p = np.stack([p[:,:,i] for i in range(3)],axis=0)
-                    pic = p -mean_image.asnumpy()
-                    pic = pic[np.newaxis, :]
-                    temp.append(get_feature(pic))
-                self.face_eval_data.append(temp)
-            except Exception as e:
-                logger.error(e)
+        if not os.path.exists("face_feature_test.npy"):
+            for name in names:
+                pathname = os.path.join(data_dir, name)
+                temp = []
+                try:
+                    for pic_name in os.listdir(pathname):
+                        pic_name = os.path.join(pathname,pic_name)
+                        p = cv2.imread(pic_name)
+                        p = cv2.resize(p, (224,224))
+                        p = np.stack([p[:,:,i] for i in range(3)],axis=0)
+                        pic = p -mean_image.asnumpy()
+                        pic = pic[np.newaxis, :]
+                        temp.append(get_feature(pic))
+                    self.face_eval_data.append(temp)
+                except Exception as e:
+                    logger.error(e)
+            np.save("face_feature_test",self.face_eval_data)
+        else:
+            self.face_eval_data = np.load("face_feature_test.npy")
         self.models_list = [i[:10] for i in self.face_eval_data]
 
     def predict(self, pic):
