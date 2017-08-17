@@ -12,7 +12,7 @@ with open('./persons.txt', 'r') as f:
     print(names)
 class facemodel():
     def __init__(self):
-        sym, arg_params, aux_params = mx.model.load_checkpoint('regression', 2050)
+        sym, arg_params, aux_params = mx.model.load_checkpoint('regression', 2000)
         mod = mx.mod.Module(symbol=sym, context=mx.gpu(), label_names=None)
         mod.bind(for_training=False, data_shapes=[('data', (1, 1))],
                  label_shapes=mod._label_shapes)
@@ -35,20 +35,27 @@ class facemodel():
                     p = np.stack([p[:,:,i] for i in range(3)],axis=0)
                     pic = p -mean_image.asnumpy()
                     pic = pic[np.newaxis, :]
-                    temp.append(pic)
+                    temp.append(get_feature(pic))
                 self.face_eval_data.append(temp)
             except Exception as e:
                 logger.error(e)
-        self.models_list = [get_feature(i[0]) for i in self.face_eval_data]
+        self.models_list = [i[:10] for i in self.face_eval_data]
 
     def predict(self, pic):
         Batch = namedtuple('Batch', ['data'])
         probs = None
-        for fe1 in self.models_list:
-            fe2 = get_feature(pic)
-            fe = cosine_similarity(fe1,fe2)[0]
-            self.regression_model.forward(Batch([mx.nd.array(fe)]))
-            t = self.regression_model.get_outputs()[0].asnumpy()
+        for fe1s in self.models_list:
+            t = None
+            mmax = None
+            for fe1 in fe1s:
+                fe = cosine_similarity(fe1,pic)[0]
+                fe = fe[np.newaxis,:]
+                self.regression_model.forward(Batch([mx.nd.array(fe)]))
+                mmax = self.regression_model.get_outputs()[0].asnumpy()
+                if t is None:
+                    t = mmax
+                elif t[0][1] < mmax[0][1]:
+                    t = mmax
             if probs is None:
                 probs = t
             else:
@@ -74,8 +81,8 @@ def eval_all_model():
     y_pred_without_other = []
     y_true_without_other = []
     for id, faces in enumerate(face_model.face_eval_data):
-        y_true += [id] * len(faces)
-        for face in faces[1:]:
+        y_true += [id] * (len(faces) -10)
+        for face in faces[10:]:
             temp = face_model.predict(pic=face)
             if temp != -1:
                 y_pred_without_other.append(temp)
