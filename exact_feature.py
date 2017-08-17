@@ -82,7 +82,9 @@ if __name__ == '__main__':
     cropus_data = np.load("face_feature.npy")
     train_crpous = cropus_data[0:6]
     def fill(cropus):
-        datas = []
+        datas = {}
+        datas['img1'] = []
+        datas['img2'] = []
         labels = []
         for id1,object1 in enumerate(cropus):
             object1 = object1[:15]
@@ -95,21 +97,22 @@ if __name__ == '__main__':
                         #print(temp[0].shape)
                         #print(np.array(cosine_similarity(fe1,fe2)[0]))
                         # datas.append(np.hstack((temp[0],np.array(cosine_similarity(fe1,fe2)[0]))[0]))
-                        datas.append(np.array(cosine_similarity(fe1,fe2)[0]))
+                        datas['img1'].append(fe1)
+                        datas['img2'].append(fe2)
                         labels.append(int(id1==id2))
         return mx.nd.array(datas),mx.nd.array(labels)
     train_datas,train_labels = fill(train_crpous)
-    val_cropus= cropus_data[12:12]
+    val_cropus= cropus_data[10:12]
     val_datas,val_labels = fill(val_cropus)
     logger.info("train len {},val len {}".format(len(train_labels.asnumpy()),len(val_datas.asnumpy())))
 
     model = get_model()
-    batch_size = 16
+    batch_size = 64
     train_iter = mx.io.NDArrayIter(train_datas,train_labels,batch_size,shuffle=True)
     # val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
     mod = mx.mod.Module(symbol=model,context=mx.gpu())
     mod.fit(train_iter,None,optimizer="adam",eval_metric='acc'
-            ,batch_end_callback=mx.callback.Speedometer(batch_size,1000),epoch_end_callback=mx.callback.do_checkpoint('regression',2000),num_epoch=2000)
+            ,batch_end_callback=mx.callback.Speedometer(batch_size,1000),epoch_end_callback=mx.callback.do_checkpoint('regression',200),num_epoch=200)
 
 '''
 a = get_feature(cropus_data[0][0])

@@ -55,6 +55,7 @@ class facemodel():
             mmax = None
             for fe1 in fe1s:
                 fe = cosine_similarity(fe1,pic)[0]
+
                 fe = fe[np.newaxis,:]
                 self.regression_model.forward(Batch([mx.nd.array(fe)]))
                 mmax = self.regression_model.get_outputs()[0].asnumpy()
