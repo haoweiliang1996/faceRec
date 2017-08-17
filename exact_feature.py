@@ -71,15 +71,18 @@ def read_in():
     return cropus_data
 
 
-cropus_data = read_in()
-cropus_data_cnn = cropus_data
-global cropus
+def dump_features():
+    cropus_data = read_in()
+    np.save("face_feature",cropus_data)
+
 
 '''
     划分数据集
 '''
 from sklearn.metrics.pairwise import cosine_similarity
 if __name__ == '__main__':
+    dump_features()
+    cropus_data = np.load("face_feature.npy")
     train_crpous = cropus_data[0:6]
     def fill(cropus):
         datas = []
