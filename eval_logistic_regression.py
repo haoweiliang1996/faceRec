@@ -61,13 +61,9 @@ class facemodel():
                 mmax = self.regression_model.get_outputs()[0].asnumpy()
                 if t is None:
                     t = mmax
-                else:
-                    t += mmax
-                '''
                 elif t[0][1] < mmax[0][1]:
                     t = mmax
-                '''
-            t /= len(fe1s)
+            # t /= len(fe1s)
             if probs is None:
                 probs = t
             else:
