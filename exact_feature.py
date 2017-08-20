@@ -31,7 +31,7 @@ Batch = namedtuple('Batch', ['data'])
 def get_feature(img):
     fe_mod.forward(Batch([mx.nd.array(img)]))
     features = fe_mod.get_outputs()[0].asnumpy()
-    return features
+    return features[0]
 
 mean_image = mx.nd.load('mean.ndarray')['mean_image']
 def parse_dir(filenames_list):
@@ -73,23 +73,24 @@ def dump_features(data_dir,feature_name):
     cropus_data = read_in(data_dir)
     np.save(feature_name,cropus_data)
 
-
+#dump_features('../megaface_tight',"face_feature")
 '''
     划分数据集
 '''
 from sklearn.metrics.pairwise import cosine_similarity
 if __name__ == '__main__':
     cropus_data = np.load("face_feature.npy")
-    train_crpous = cropus_data[0:6]
+    train_crpous = cropus_data[20:120]
     def fill(cropus):
         datas = {}
-        datas['img1'] = []
-        datas['img2'] = []
+        # datas['img1'] = []
+        # datas['img2'] = []
+        datas['sim'] = []
         labels = []
         for id1,object1 in enumerate(cropus):
-            object1 = object1[:15]
+            object1 = object1[:10]
             for id2,object2 in enumerate(cropus):
-                object2 = object2[:15]
+                object2 = object2[:10]
                 for pic1 in object1:
                     fe1 = pic1
                     for pic2 in object2:
@@ -97,22 +98,25 @@ if __name__ == '__main__':
                         #print(temp[0].shape)
                         #print(np.array(cosine_similarity(fe1,fe2)[0]))
                         # datas.append(np.hstack((temp[0],np.array(cosine_similarity(fe1,fe2)[0]))[0]))
-                        datas['img1'].append(fe1)
-                        datas['img2'].append(fe2)
+                        # datas['img1'].append(fe1)
+                        # datas['img2'].append(fe2)
+                        datas['sim'].append(np.array(cosine_similarity(fe1[np.newaxis,:],fe2[np.newaxis,:])[0]))
                         labels.append(int(id1==id2))
-        return mx.nd.array(datas),mx.nd.array(labels)
+        return datas,mx.nd.array(labels)
     train_datas,train_labels = fill(train_crpous)
-    val_cropus= cropus_data[10:12]
+    val_cropus= cropus_data[120:135]
     val_datas,val_labels = fill(val_cropus)
-    logger.info("train len {},val len {}".format(len(train_labels.asnumpy()),len(val_datas.asnumpy())))
+    logger.info("train len {},val len {}".format(len(train_labels.asnumpy()),len(val_labels.asnumpy())))
 
     model = get_model()
-    batch_size = 64
+    batch_size = 512
+    logger.info('prepare data')
     train_iter = mx.io.NDArrayIter(train_datas,train_labels,batch_size,shuffle=True)
-    # val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
-    mod = mx.mod.Module(symbol=model,context=mx.gpu())
-    mod.fit(train_iter,None,optimizer="adam",eval_metric='acc'
-            ,batch_end_callback=mx.callback.Speedometer(batch_size,1000),epoch_end_callback=mx.callback.do_checkpoint('regression',200),num_epoch=200)
+    val_iter= mx.io.NDArrayIter(val_datas,val_labels,batch_size)
+    logger.info('begin train')
+    mod = mx.mod.Module(symbol=model,context=mx.gpu(),data_names=['sim'])
+    mod.fit(train_iter,val_iter,optimizer="adam",eval_metric='f1'
+            ,batch_end_callback=mx.callback.Speedometer(batch_size,1000),epoch_end_callback=mx.callback.do_checkpoint('regression',150),num_epoch=150)
 
 '''
 a = get_feature(cropus_data[0][0])

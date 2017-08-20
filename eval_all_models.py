@@ -55,8 +55,10 @@ def eval_all_model():
         try:
             for pic_name in os.listdir(pathname)[len_of_train:]:
                 pic_name = os.path.join(pathname,pic_name)
-                p = cv2.imread(pic_name, cv2.IMREAD_GRAYSCALE)
-                p = cv2.resize(p, (64, 64))
+                tp = cv2.imread(pic_name, cv2.IMREAD_GRAYSCALE)
+                tp = cv2.resize(tp, (64, 64))
+                p = tp -127.5
+                p /= 128
                 p = p[np.newaxis, :]
                 temp.append(p)
             face_eval_data.append(temp)

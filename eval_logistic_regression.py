@@ -12,9 +12,9 @@ with open('./persons.txt', 'r') as f:
     print(names)
 class facemodel():
     def __init__(self):
-        sym, arg_params, aux_params = mx.model.load_checkpoint('regression', 2000)
-        mod = mx.mod.Module(symbol=sym, context=mx.gpu(), label_names=None)
-        mod.bind(for_training=False, data_shapes=[('data', (1, 1))],
+        sym, arg_params, aux_params = mx.model.load_checkpoint('regression', 150)
+        mod = mx.mod.Module(symbol=sym, context=mx.gpu(), data_names=['sim'],label_names=None)
+        mod.bind(for_training=False, data_shapes=[('sim', (1, 1))],
                  label_shapes=mod._label_shapes)
         mod.set_params(arg_params, aux_params, allow_missing=True)
         self.regression_model =mod
@@ -61,8 +61,13 @@ class facemodel():
                 mmax = self.regression_model.get_outputs()[0].asnumpy()
                 if t is None:
                     t = mmax
+                else:
+                    t += mmax
+                '''
                 elif t[0][1] < mmax[0][1]:
                     t = mmax
+                '''
+            t /= len(fe1s)
             if probs is None:
                 probs = t
             else:
